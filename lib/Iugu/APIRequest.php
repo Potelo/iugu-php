@@ -8,7 +8,7 @@ class Iugu_APIRequest
 
     private function _defaultHeaders($headers = [])
     {
-        $headers[] = 'Authorization: Basic '.base64_encode(Iugu::getApiKey().':');
+        $headers[] = 'Authorization: Basic ' . base64_encode(Iugu::getApiKey() . ':');
         $headers[] = 'Accept: application/json';
         $headers[] = 'Accept-Charset: utf-8';
         $headers[] = 'User-Agent: Iugu PHPLibrary';
@@ -33,29 +33,41 @@ class Iugu_APIRequest
 
         list($response_body, $response_code) = $this->requestWithCURL($method, $url, $headers, $data);
 
-        error_log('IUGU - Requisição executada, Response Code: '.$response_code.', Response: '.$response_body);
+        error_log('IUGU - Requisição executada, Response Code: ' . $response_code . ', Response: ' . $response_body);
 
         $response = json_decode($response_body);
         $jsonError = json_last_error();
-        if(is_null($response) || $jsonError != JSON_ERROR_NONE)
-        {
-            switch($jsonError)
-            {
-                case JSON_ERROR_NONE:           $error = 'Nenhum erro identificado';            break;
-                case JSON_ERROR_DEPTH:          $error = 'Máxima profundidade de nós atingida'; break;
-                case JSON_ERROR_STATE_MISMATCH: $error = 'JSON inválido ou mal formado';        break;
-                case JSON_ERROR_CTRL_CHAR:      $error = 'Caractere de controle encontrado';    break;
-                case JSON_ERROR_SYNTAX:         $error = 'JSON malformado';                     break;
-                case JSON_ERROR_UTF8:           $error = 'Carateres UTF-8 malformados';         break;
-                default:                        $error = 'Erro desconhecido ('.$jsonError.')';  break;
+        if (is_null($response) || $jsonError != JSON_ERROR_NONE) {
+            switch ($jsonError) {
+                case JSON_ERROR_NONE:
+                    $error = 'Nenhum erro identificado';
+                    break;
+                case JSON_ERROR_DEPTH:
+                    $error = 'Máxima profundidade de nós atingida';
+                    break;
+                case JSON_ERROR_STATE_MISMATCH:
+                    $error = 'JSON inválido ou mal formado';
+                    break;
+                case JSON_ERROR_CTRL_CHAR:
+                    $error = 'Caractere de controle encontrado';
+                    break;
+                case JSON_ERROR_SYNTAX:
+                    $error = 'JSON malformado';
+                    break;
+                case JSON_ERROR_UTF8:
+                    $error = 'Carateres UTF-8 malformados';
+                    break;
+                default:
+                    $error = 'Erro desconhecido (' . $jsonError . ')';
+                    break;
             }
-            error_log('IUGU - Erro de parse do JSON: '.$error.
-                      ', Response code: '.$response_code.', Mensagem de erro: '.json_last_error_msg().', Response: '.$response_body);
-            throw new IuguObjectNotFound($response_body);
+            error_log('IUGU - Erro de parse do JSON: ' . $error .
+                ', Response code: ' . $response_code . ', Mensagem de erro: ' . json_last_error_msg() . ', Response: ' . $response_body);
+            throw new IuguRequestException($response_body, $response_code);
         }
 
         if ($response_code == 404) {
-            throw new IuguObjectNotFound($response_body);
+            throw new IuguObjectNotFound($response_body, $response_code);
         }
 
         if (isset($response->errors)) {
@@ -80,16 +92,16 @@ class Iugu_APIRequest
         $method = strtolower($method);
 
         switch ($method) {
-        case 'get':
-        case 'delete':
-            $paramsInURL = Iugu_Utilities::arrayToParams($data);
-            $data = null;
-            $url = (strpos($url, '?')) ? $url.'&'.$paramsInURL : $url.'?'.$paramsInURL;
-            break;
-        case 'post':
-        case 'put':
-            $data = Iugu_Utilities::arrayToParams($data);
-            break;
+            case 'get':
+            case 'delete':
+                $paramsInURL = Iugu_Utilities::arrayToParams($data);
+                $data = null;
+                $url = (strpos($url, '?')) ? $url . '&' . $paramsInURL : $url . '?' . $paramsInURL;
+                break;
+            case 'post':
+            case 'put':
+                $data = Iugu_Utilities::arrayToParams($data);
+                break;
         }
 
         return [$url, $data];
@@ -125,7 +137,7 @@ class Iugu_APIRequest
 
         $opts[CURLOPT_SSL_VERIFYHOST] = 2;
         $opts[CURLOPT_SSL_VERIFYPEER] = true;
-        $opts[CURLOPT_CAINFO] = realpath(dirname(__FILE__).DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'data').DIRECTORY_SEPARATOR.'ca-bundle.crt';
+        $opts[CURLOPT_CAINFO] = realpath(dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'data') . DIRECTORY_SEPARATOR . 'ca-bundle.crt';
 
         curl_setopt_array($curl, $opts);
 
