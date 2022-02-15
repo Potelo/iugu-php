@@ -10,6 +10,7 @@ final class Iugu_CustomerTest extends TestCase
   {
     Iugu::$endpoint = "http://api.desenvolvimento";
     Iugu::setApiKey("development_api_token");
+    Iugu::setLogErrors('false');
   }
 
   public function testShouldCreateACustomer()

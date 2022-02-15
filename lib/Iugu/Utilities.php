@@ -7,6 +7,7 @@ class Iugu_Utilities
         $apiKey = getenv('IUGU_API_KEY');
         if ($apiKey) {
             Iugu::setApiKey($apiKey);
+            Iugu::setLogErrors(getenv("IUGU_LOG_ERRORS"));
         }
     }
 
@@ -39,15 +40,15 @@ class Iugu_Utilities
             }
 
             if ($prefix && $k && !is_int($k)) {
-                $k = $prefix.'['.$k.']';
+                $k = $prefix . '[' . $k . ']';
             } elseif ($prefix) {
-                $k = $prefix.'[]';
+                $k = $prefix . '[]';
             }
 
             if (is_array($v)) {
                 $params[] = self::arrayToParams($v, $k);
             } else {
-                $params[] = $k.'='.urlencode($v);
+                $params[] = $k . '=' . urlencode($v);
             }
         }
 

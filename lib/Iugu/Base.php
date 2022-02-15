@@ -41,8 +41,16 @@ abstract class Iugu
         return self::$api_key;
     }
 
-    public static function setLogErrors(bool $trueOrFalse)
+    public static function setLogErrors($trueOrFalse)
     {
+        if ($trueOrFalse === 'false') {
+            $trueOrFalse = false;
+        }
+
+        if ($trueOrFalse === 'true') {
+            $trueOrFalse = true;
+        }
+
         self::$log_errors = $trueOrFalse;
     }
 
