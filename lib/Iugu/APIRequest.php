@@ -33,7 +33,9 @@ class Iugu_APIRequest
 
         list($response_body, $response_code) = $this->requestWithCURL($method, $url, $headers, $data);
 
-        error_log('IUGU - Requisição executada, Response Code: ' . $response_code . ', Response: ' . $response_body);
+        if (Iugu::getLogErrors()) {
+            error_log('IUGU - Requisição executada, Response Code: ' . $response_code . ', Response: ' . $response_body);
+        }
 
         $response = json_decode($response_body);
         $jsonError = json_last_error();
@@ -61,8 +63,11 @@ class Iugu_APIRequest
                     $error = 'Erro desconhecido (' . $jsonError . ')';
                     break;
             }
-            error_log('IUGU - Erro de parse do JSON: ' . $error .
-                ', Response code: ' . $response_code . ', Mensagem de erro: ' . json_last_error_msg() . ', Response: ' . $response_body);
+
+            if (Iugu::getLogErrors()) {
+                error_log('IUGU - Erro de parse do JSON: ' . $error . ', Response code: ' . $response_code . ', Mensagem de erro: ' . json_last_error_msg() . ', Response: ' . $response_body);
+            }
+
             throw new IuguRequestException($response_body, $response_code);
         }
 

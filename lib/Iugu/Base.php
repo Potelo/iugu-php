@@ -24,10 +24,11 @@ abstract class Iugu
     public static $api_key = null;
     public static $api_version = 'v1';
     public static $endpoint = 'https://api.iugu.com';
+    public static $log_errors = true;
 
     public static function getBaseURI()
     {
-        return self::$endpoint.'/'.self::$api_version;
+        return self::$endpoint . '/' . self::$api_version;
     }
 
     public static function setApiKey($_api_key)
@@ -38,5 +39,15 @@ abstract class Iugu
     public static function getApiKey()
     {
         return self::$api_key;
+    }
+
+    public static function setLogErrors(bool $trueOrFalse)
+    {
+        self::$log_errors = $trueOrFalse;
+    }
+
+    public static function getLogErrors()
+    {
+        return self::$log_errors;
     }
 }
