@@ -17,7 +17,7 @@ class APIResource extends Iugu_Object
     {
         $object_type = self::convertClassToObjectType();
         switch ($object_type) {
-                // Add Exceptions as needed
+            // Add Exceptions as needed
             case 'charge':
                 return $object_type;
             case 'payment_token':
@@ -69,8 +69,7 @@ class APIResource extends Iugu_Object
     protected static function createFromResponse($response)
     {
         return Iugu_Factory::createFromResponse(
-            self::convertClassToObjectType(),
-            $response
+            self::convertClassToObjectType(), $response
         );
     }
 
@@ -78,9 +77,7 @@ class APIResource extends Iugu_Object
     {
         $response = self::createFromResponse(
             self::API()->request(
-                'POST',
-                static::url($attributes),
-                $attributes
+                'POST', static::url($attributes), $attributes
             )
         );
         foreach ($attributes as $attr => $value) {
@@ -98,8 +95,7 @@ class APIResource extends Iugu_Object
 
         try {
             $response = self::API()->request(
-                'DELETE',
-                static::url($this)
+                'DELETE', static::url($this)
             );
 
             if (isset($response->errors)) {
@@ -116,13 +112,12 @@ class APIResource extends Iugu_Object
     {
         try {
             $response = self::API()->request(
-                'GET',
-                static::url($options),
-                $options
+                'GET', static::url($options), $options
             );
 
             return self::createFromResponse($response);
         } catch (Exception $e) {
+
         }
 
         return [];
@@ -132,11 +127,16 @@ class APIResource extends Iugu_Object
     {
         try {
             $response = static::API()->request(
-                'GET',
-                static::url($key)
+                'GET', static::url($key)
             );
 
-            return self::createFromResponse($response);
+            $object = self::createFromResponse($response);
+
+            if (isset($object->error)) {
+                throw new IuguRequestException('Iugu: ' . $object->error);
+            }
+
+            return $object;
         } catch (IuguObjectNotFound $e) {
             throw new IuguObjectNotFound(self::convertClassToObjectType(get_called_class()) . ':' . ' not found');
         }
@@ -150,8 +150,7 @@ class APIResource extends Iugu_Object
 
         try {
             $response = self::API()->request(
-                'GET',
-                static::url($this)
+                'GET', static::url($this)
             );
 
             if (isset($response->errors)) {
@@ -172,9 +171,7 @@ class APIResource extends Iugu_Object
     {
         try {
             $response = self::API()->request(
-                $this->is_new() ? 'POST' : 'PUT',
-                static::url($this),
-                $this->modifiedAttributes()
+                $this->is_new() ? 'POST' : 'PUT', static::url($this), $this->modifiedAttributes()
             );
 
             $new_object = self::createFromResponse($response);
@@ -190,4 +187,5 @@ class APIResource extends Iugu_Object
 
         return true;
     }
+
 }
