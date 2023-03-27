@@ -68,17 +68,23 @@ class Iugu_Invoice extends APIResource
         return true;
     }
 
-    public function refund()
+    public function refund($partialValueRefundCents = null)
     {
         if ($this->is_new()) {
             return false;
         }
 
+        $data = [];
+        if ($partialValueRefundCents) {
+            $data['partial_value_refund_cents'] = $partialValueRefundCents;
+        }
+
         try {
             $response = self::API()->request(
-        'POST',
-        static::url($this).'/refund'
-      );
+                'POST',
+                static::url($this).'/refund',
+                $data
+            );
             if (isset($response->errors)) {
                 throw new IuguRequestException($response->errors);
             }
