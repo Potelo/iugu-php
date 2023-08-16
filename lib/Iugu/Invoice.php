@@ -86,7 +86,8 @@ class Iugu_Invoice extends APIResource
                 $data
             );
             if (isset($response->errors)) {
-                throw new IuguRequestException($response->errors);
+                $error = is_array($response->errors) ? $response->errors[array_key_first($response->errors)] : $response->errors;
+                throw new IuguRequestException($error);
             }
             $new_object = self::createFromResponse($response);
             $this->copy($new_object);
