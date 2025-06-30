@@ -86,7 +86,30 @@ class Iugu_Invoice extends APIResource
                 $data
             );
             if (isset($response->errors)) {
-                throw new IuguRequestException($response->errors);
+                /**
+                 * Função auxiliar para extrair e achatar todas as mensagens de erro em uma única string.
+                 *
+                 * @param mixed $errors Erros da resposta da API.
+                 * @return string
+                 */
+                function flattenErrorMessages($errors)
+                {
+                    if (is_array($errors)) {
+                        $messages = [];
+                        foreach ($errors as $error) {
+                            // Chama a si mesma para tratar arrays aninhados.
+                            $messages[] = flattenErrorMessages($error);
+                        }
+                        return implode(', ', array_filter($messages));
+                    }
+
+                    // Converte o valor final para string.
+                    return (string) $errors;
+                }
+
+                $errorMessage = flattenErrorMessages($response->errors);
+
+                throw new IuguRequestException($errorMessage);
             }
             $new_object = self::createFromResponse($response);
             $this->copy($new_object);
