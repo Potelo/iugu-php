@@ -81,7 +81,10 @@ class APIResource extends Iugu_Object
             )
         );
         foreach ($attributes as $attr => $value) {
+          // não sobrescreve valor da resposta para evitar inconsistências
+          if (empty($response[$attr])) {
             $response[$attr] = $value;
+          }
         }
 
         return $response;
