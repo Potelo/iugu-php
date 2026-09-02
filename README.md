@@ -49,6 +49,27 @@ Iugu_Charge::create(
 );
 ```
 
+## Modificações deste fork
+
+Este repositório é o fork `Potelo/iugu-php` usado pelo pacote `potelo/multi-payment`. Além do
+upstream `iugu/iugu`, ele traz:
+
+- **Cabeçalhos por requisição** (1.1.0): `Iugu_APIRequest::request($method, $url, $data, $headers)`
+  aceita uma lista de cabeçalhos no formato `'Nome: valor'`, acrescentada aos padrão. É o que
+  permite enviar `Idempotency-Key` nos endpoints que o aceitam (criar fatura, criar assinatura,
+  criar cliente e cobrança direta).
+- **Status e cabeçalhos da resposta na instância** (1.1.0): depois de cada `request()`,
+  `$apiRequest->lastResponseCode` traz o status HTTP (JSON ou não; nulo sem resposta) e
+  `$apiRequest->lastResponseHeaders` os cabeçalhos com o nome em minúsculas (`retry-after`, por
+  exemplo). A variável global `$iugu_last_api_response_code` continua sendo gravada.
+- **Chave de API por instância** (1.1.0): `new Iugu_APIRequest($apiKey)` usa a chave informada;
+  sem ela, vale a global de `Iugu::setApiKey()`.
+- **Reembolso parcial**: `Iugu_Invoice::refund($partialValueRefundCents)`.
+- **Tratamento de erros**: `errors` como objeto ou string é normalizado e a `IuguRequestException`
+  carrega o status HTTP em `getCode()` quando a resposta não é JSON.
+- **`ca-bundle.crt` atualizado** com os certificados raiz da Mozilla de dezembro de 2025 (o do
+  upstream, de 2013, não valida mais o certificado da API).
+
 ## Documentação
 
 Acesse [iugu.com/documentacao](http://iugu.com/documentacao) para referência

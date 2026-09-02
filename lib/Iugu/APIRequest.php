@@ -2,13 +2,50 @@
 
 class Iugu_APIRequest
 {
-    public function __construct()
+    /**
+     * Status HTTP da última resposta recebida por esta instância, JSON ou não. Nulo antes da
+     * primeira requisição e quando o cURL não obteve resposta (falha de rede, timeout).
+     *
+     * @var int|null
+     */
+    public $lastResponseCode = null;
+
+    /**
+     * Cabeçalhos da última resposta recebida por esta instância, com o nome em minúsculas.
+     * Cabeçalho repetido vira uma lista de valores.
+     *
+     * @var array
+     */
+    public $lastResponseHeaders = array();
+
+    /**
+     * Chave de API desta instância. Nula usa a chave global de Iugu::setApiKey().
+     *
+     * @var string|null
+     */
+    private $apiKey = null;
+
+    /**
+     * @param  string|null  $apiKey  chave de API desta instância; nula usa a global
+     */
+    public function __construct($apiKey = null)
     {
+        $this->apiKey = $apiKey;
+    }
+
+    /**
+     * Chave de API usada nas requisições desta instância: a própria ou, na falta dela, a global.
+     *
+     * @return string|null
+     */
+    public function getApiKey()
+    {
+        return $this->apiKey !== null ? $this->apiKey : Iugu::getApiKey();
     }
 
     private function _defaultHeaders($headers = [])
     {
-        $headers[] = 'Authorization: Basic ' . base64_encode(Iugu::getApiKey() . ':');
+        $headers[] = 'Authorization: Basic ' . base64_encode($this->getApiKey() . ':');
         $headers[] = 'Accept: application/json';
         $headers[] = 'Accept-Charset: utf-8';
         $headers[] = 'User-Agent: Iugu PHPLibrary';
@@ -17,21 +54,40 @@ class Iugu_APIRequest
         return $headers;
     }
 
-    public function request($method, $url, $data = [])
+    /**
+     * Executa uma requisição à API e devolve o corpo decodificado.
+     *
+     * @param  string  $method
+     * @param  string  $url
+     * @param  array  $data
+     * @param  array  $headers  cabeçalhos extras desta requisição, no formato 'Nome: valor'
+     *                          (por exemplo 'Idempotency-Key: ...'), acrescentados aos padrão
+     * @return mixed
+     * @throws IuguAuthenticationException  chave de API não configurada
+     * @throws IuguRequestException  resposta que não é JSON; o status HTTP vai em getCode()
+     * @throws IuguObjectNotFound  resposta 404
+     */
+    public function request($method, $url, $data = [], $headers = [])
     {
         global $iugu_last_api_response_code;
 
-        if (Iugu::getApiKey() == null) {
+        $this->lastResponseCode = null;
+        $this->lastResponseHeaders = array();
+
+        if ($this->getApiKey() == null) {
             Iugu_Utilities::authFromEnv();
         }
 
-        if (Iugu::getApiKey() == null) {
+        if ($this->getApiKey() == null) {
             throw new IuguAuthenticationException('Chave de API não configurada. Utilize Iugu::setApiKey(...) para configurar.');
         }
 
-        $headers = $this->_defaultHeaders();
+        $headers = array_merge($this->_defaultHeaders(), array_values((array) $headers));
 
-        list($response_body, $response_code) = $this->requestWithCURL($method, $url, $headers, $data);
+        list($response_body, $response_code, $response_headers) = $this->requestWithCURL($method, $url, $headers, $data);
+
+        $this->lastResponseCode = $response_code > 0 ? (int) $response_code : null;
+        $this->lastResponseHeaders = $response_headers;
 
         if (Iugu::getLogErrors()) {
             error_log('IUGU - Requisição executada, Response Code: ' . $response_code . ', Response: ' . $response_body);
@@ -133,12 +189,31 @@ class Iugu_APIRequest
             $opts[CURLOPT_POSTFIELDS] = $data;
         }
 
+        $response_headers = array();
+
         $opts[CURLOPT_URL] = $url;
         $opts[CURLOPT_RETURNTRANSFER] = true;
         $opts[CURLOPT_CONNECTTIMEOUT] = 30;
         $opts[CURLOPT_TIMEOUT] = 80;
         $opts[CURLOPT_RETURNTRANSFER] = true;
         $opts[CURLOPT_HTTPHEADER] = $headers;
+        $opts[CURLOPT_HEADERFUNCTION] = function ($curl, $line) use (&$response_headers) {
+            $length = strlen($line);
+            $parts = explode(':', $line, 2);
+            if (count($parts) < 2) {
+                return $length;
+            }
+
+            $name = strtolower(trim($parts[0]));
+            $value = trim($parts[1]);
+            if (isset($response_headers[$name])) {
+                $response_headers[$name] = array_merge((array) $response_headers[$name], array($value));
+            } else {
+                $response_headers[$name] = $value;
+            }
+
+            return $length;
+        };
 
         $opts[CURLOPT_SSL_VERIFYHOST] = 2;
         $opts[CURLOPT_SSL_VERIFYPEER] = true;
@@ -151,6 +226,6 @@ class Iugu_APIRequest
 
         curl_close($curl);
 
-        return [$response_body, $response_code];
+        return [$response_body, $response_code, $response_headers];
     }
 }
