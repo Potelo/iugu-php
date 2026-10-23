@@ -224,7 +224,11 @@ class Iugu_APIRequest
         $response_body = curl_exec($curl);
         $response_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
-        curl_close($curl);
+        // Desde o PHP 8.0 o handle é liberado ao sair do escopo e o 8.5 deprecia curl_close();
+        // até o 7.4 a chamada ainda é necessária para liberar o handle.
+        if (PHP_VERSION_ID < 80000) {
+            curl_close($curl);
+        }
 
         return [$response_body, $response_code, $response_headers];
     }
