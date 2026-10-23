@@ -13,7 +13,7 @@ class Iugu_Utilities
 
     public static function utf8($value)
     {
-        return (is_string($value) && mb_detect_encoding($value, 'UTF-8', true) != 'UTF-8') ? utf8_encode($value) : $value;
+        return (is_string($value) && mb_detect_encoding($value, 'UTF-8', true) != 'UTF-8') ? mb_convert_encoding($value, 'UTF-8', 'ISO-8859-1') : $value;
     }
 
     public static function convertDateFromISO($datetime)

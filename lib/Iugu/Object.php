@@ -39,23 +39,27 @@ class Iugu_Object implements ArrayAccess
         return $this->offsetGet($key);
     }
 
+    #[\ReturnTypeWillChange]
     public function offsetSet($key, $value)
     {
         $this->_attributes[$key] = $value;
         $this->_unsavedAttributes[$key] = 1;
     }
 
+    #[\ReturnTypeWillChange]
     public function offsetExists($k)
     {
         return array_key_exists($k, $this->_attributes);
     }
 
+    #[\ReturnTypeWillChange]
     public function offsetUnset($key)
     {
         unset($this->_attributes[$key]);
         unset($this->_unsavedAttributes[$key]);
     }
 
+    #[\ReturnTypeWillChange]
     public function offsetGet($key)
     {
         return array_key_exists($key, $this->_attributes) ? $this->_attributes[$key] : null;
